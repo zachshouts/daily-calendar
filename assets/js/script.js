@@ -14,21 +14,45 @@ $(function () {
     // TODO: Add code to display the current date in the header of the page.
     const currentHour = dayjs().hour();
     const currentDate = dayjs().format('dddd, MMMM D YYYY');
+    const timeLabels = ['9am', '10am', '11am', '12am', '1pm', '2pm', '3pm', '4pm', '5pm'];
+    const defaultStorage = [{hour: "hour-9", event: ""}, {hour: "hour-10", event: ""}, {hour: "hour-11", event: ""}, {hour: "hour-12", event: ""}, {hour: "hour-13", event: ""}, {hour: "hour-14", event: ""}, {hour: "hour-15", event: ""}, {hour: "hour-16", event: ""}, {hour: "hour-17", event: ""},]
     const timeContainer = $('#currentDay');
+    timeContainer.text(currentDate);
+    let events = JSON.parse(localStorage.getItem('events') || JSON.stringify(defaultStorage));
+    let bgColor;
 
-    const events = JSON.parse(localStorage.getItem('events') || '[]');
+    for (let i = 0; i < timeLabels.length; i++) {
+        if (i + 9 < currentHour) {
+            bgColor = 'past';
+        } else if (i + 9 === currentHour) {
+            bgColor = 'present';
+        } else {
+            bgColor = 'future';
+        };
+
+        const row = $('<div>').addClass(`row time-block ${bgColor}`).attr('id', `hour-${i+9}`);
+        const col = $('<div>').addClass('col-2 col-md-1 hour text-center py-3').text(timeLabels[i]);
+        const textArea = $('<textarea>').addClass('col-8 col-md-10 description').attr('rows', '3').text(' ');
+        const button = $('<button>').addClass('btn saveBtn col-2 col-md-1').attr('aria-label', 'save');
+        const icon = $('<i>').addClass('fas fa-save').attr('aria-hidden', 'true');
+        button.append(icon);
+        row.append(col, textArea, button);
+        $('.container-lg').append(row);
+    }
+
+    if (events.length !== 0) {
+        events.forEach(function(el) {
+            $(`#${el.hour}`).children('textarea').val(el.event);
+        });
+    }
+
+
     const saveBtn = $('.saveBtn');
-
     saveBtn.click(function (e) {
         const saveHour = $(this).parent().attr('id');
-        console.log(saveHour);
         const hourEvent = $(`#${saveHour}`).children('textarea').val();
-        console.log(hourEvent);
-        const event = {
-            hour: saveHour,
-            event: hourEvent
-        };
-        events.push(event);
+        
+        events = events.map(storageEvent => (storageEvent.hour === saveHour) ? {...storageEvent, event: hourEvent} : storageEvent);
         localStorage.setItem('events', JSON.stringify(events));
     });
 });
